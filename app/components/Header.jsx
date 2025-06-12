@@ -1,4 +1,4 @@
-import {Suspense} from 'react';
+import {Suspense, useEffect, useState} from 'react';
 import {Await, NavLink, useAsyncValue} from 'react-router';
 import {useAnalytics, useOptimisticCart} from '@shopify/hydrogen';
 import {useAside} from '~/components/Aside';
@@ -85,14 +85,42 @@ export function HeaderMenu({
 /**
  * @param {Pick<HeaderProps, 'isLoggedIn' | 'cart'>}
  */
+
+
 function HeaderCtas({isLoggedIn, cart}) {
+
+  const handleLogout =  () => {
+    fetch('/logout', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+
+      },
+    }).then((response) => {
+     const success = response.json();
+     console.log('Logout successful:', success);
+     localStorage.removeItem('customerAccessToken'); // Clear the token from local storage
+     window.location.href = '/login'; // Redirect to home page after logout
+    }
+    ).catch((error) => {
+      console.error('Error during logout:', error);
+    });
+  }
+
+  const getToken = () => {
+    const token = typeof window!=='undefined' ? localStorage.getItem('customerAccessToken') : null;
+    return token;
+  }
+  
+
   return (
     <nav className="header-ctas" role="navigation">
       <HeaderMenuMobileToggle />
+      { isLoggedIn  && <div style={{cursor: "pointer"}} onClick={() => handleLogout()}>{ getToken() && 'logout'}</div>}
       <NavLink prefetch="intent" to="/account" style={activeLinkStyle}>
         <Suspense fallback="Sign in">
           <Await resolve={isLoggedIn} errorElement="Sign in">
-            {(isLoggedIn) => (isLoggedIn ? 'Account' : 'Sign in')}
+            {(isLoggedIn) => (getToken() ? 'Account' : 'Sign in')}
           </Await>
         </Suspense>
       </NavLink>

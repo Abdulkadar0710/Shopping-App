@@ -15,6 +15,7 @@ import resetStyles from '~/styles/reset.css?url';
 import appStyles from '~/styles/app.css?url';
 import tailwindCss from './styles/tailwind.css?url';
 import {PageLayout} from './components/PageLayout';
+import { getCustomerAccessToken } from './lib/auth';
 
 /**
  * This is important to avoid re-fetching root queries on sub-navigations
@@ -63,6 +64,24 @@ export function links() {
  * @param {LoaderFunctionArgs} args
  */
 export async function loader(args) {
+
+
+  // args.context.customerAccount.isLoggedIn = async () => {
+  //   return true; // Assuming the user is logged in after successful login
+  // };
+
+
+  const setLoggedIn = (isLoggedIn) => {
+    console.log('Setting logged-in status:', isLoggedIn);
+  args.context.customerAccount.isLoggedIn = async () => {
+    return isLoggedIn; // Return the logged-in status
+    };
+  };
+
+  const token = await getCustomerAccessToken(args.context); 
+
+  console.log('Customer access token:', token); 
+ 
   // Start fetching non-critical data without blocking time to first byte
   const deferredData = loadDeferredData(args);
 
@@ -79,6 +98,7 @@ export async function loader(args) {
       storefront,
       publicStorefrontId: env.PUBLIC_STOREFRONT_ID,
     }),
+    // setLoggedIn,
     consent: {
       checkoutDomain: env.PUBLIC_CHECKOUT_DOMAIN,
       storefrontAccessToken: env.PUBLIC_STOREFRONT_API_TOKEN,
@@ -121,7 +141,7 @@ function loadDeferredData({context}) {
   const {storefront, customerAccount, cart} = context;
 
   // defer the footer query (below the fold)
-  const footer = storefront
+  const footer = storefront 
     .query(FOOTER_QUERY, {
       cache: storefront.CacheLong(),
       variables: {
@@ -148,6 +168,8 @@ export function Layout({children}) {
   /** @type {RootLoader} */
   const data = useRouteLoaderData('root');
 
+  // console.log('Root loader data:', data);
+
   return (
     <html lang="en">
       <head>
@@ -166,7 +188,7 @@ export function Layout({children}) {
             shop={data.shop}
             consent={data.consent}
           >
-            <PageLayout {...data}>{children}</PageLayout>
+            <PageLayout {...data}>{children}</PageLayout> 
           </Analytics.Provider>
         ) : (
           children

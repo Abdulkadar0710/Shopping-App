@@ -1,7 +1,8 @@
 import {Await, useLoaderData, Link} from 'react-router';
-import {Suspense} from 'react';
+import {Suspense, useEffect} from 'react';
 import {Image} from '@shopify/hydrogen';
 import {ProductItem} from '~/components/ProductItem';
+import { use } from 'react';
 
 /**
  * @type {MetaFunction}
@@ -17,10 +18,17 @@ export async function loader(args) {
   // Start fetching non-critical data without blocking time to first byte
   const deferredData = loadDeferredData(args);
 
+  const context = args.context;
+
+  const isLoggedIn = await context.customerAccount.isLoggedIn();
+  // console.log('Is user logged in:', isLoggedIn);
+
   // Await the critical data required to render initial state of the page
   const criticalData = await loadCriticalData(args);
 
-  return {...deferredData, ...criticalData};
+  const dd = await args.context.customerAccount;
+
+  return {...deferredData, ...criticalData, context: dd};
 }
 
 /**
@@ -60,11 +68,21 @@ function loadDeferredData({context}) {
 }
 
 export default function Homepage() {
+
+  useEffect(() => {
+    const customerAccessToken = localStorage.getItem('customerAccessToken');
+    if (!customerAccessToken) {
+      window.location.href = '/login'; // Redirect to login if not authenticated
+    }
+  }, []);
+
+
   /** @type {LoaderReturnData} */
   const data = useLoaderData();
+  
   return (
     <div className="home">
-      <FeaturedCollection collection={data.featuredCollection} />
+      {/* <FeaturedCollection collection={data.featuredCollection} /> */}
       <RecommendedProducts products={data.recommendedProducts} />
     </div>
   );
@@ -75,23 +93,23 @@ export default function Homepage() {
  *   collection: FeaturedCollectionFragment;
  * }}
  */
-function FeaturedCollection({collection}) {
-  if (!collection) return null;
-  const image = collection?.image;
-  return (
-    <Link
-      className="featured-collection"
-      to={`/collections/${collection.handle}`}
-    >
-      {image && (
-        <div className="featured-collection-image">
-          <Image data={image} sizes="100vw" />
-        </div>
-      )}
-      <h1>{collection.title}</h1>
-    </Link>
-  );
-}
+// function FeaturedCollection({collection}) {
+//   if (!collection) return null;
+//   const image = collection?.image;
+//   return (
+//     <Link
+//       className="featured-collection"
+//       to={`/collections/${collection.handle}`}
+//     >
+//       {image && (
+//         <div className="featured-collection-image">
+//           <Image data={image} sizes="100vw" />
+//         </div>
+//       )}
+//       <h1>{collection.title}</h1>
+//     </Link>
+//   );
+// }
 
 /**
  * @param {{
@@ -100,22 +118,27 @@ function FeaturedCollection({collection}) {
  */
 function RecommendedProducts({products}) {
   return (
-    <div className="recommended-products">
-      <h2>Recommended Products</h2>
-      <Suspense fallback={<div>Loading...</div>}>
+    <div className="recommended-products px-4 py-8 bg-gray-50">
+      <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
+        Recommended Products
+      </h2>
+      <Suspense fallback={<div className="text-center text-gray-500">Loading...</div>}>
         <Await resolve={products}>
           {(response) => (
-            <div className="recommended-products-grid">
+            <div className="recommended-products-grid grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {response
                 ? response.products.nodes.map((product) => (
-                    <ProductItem key={product.id} product={product} />
+                    <ProductItem
+                      key={product.id}
+                      product={product}
+                      className="bg-white shadow-md rounded-lg p-4 hover:shadow-lg transition-shadow"
+                    />
                   ))
                 : null}
             </div>
           )}
         </Await>
       </Suspense>
-      <br />
     </div>
   );
 }
