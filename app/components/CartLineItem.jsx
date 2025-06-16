@@ -19,7 +19,10 @@ export function CartLineItem({layout, line}) {
   const {close} = useAside();
 
   return (
-    <li key={id} className="cart-line">
+    <li
+      key={id}
+      className="cart-line flex flex-col md:flex-row items-center gap-4 p-4 border-b border-gray-200"
+    >
       {image && (
         <Image
           alt={title}
@@ -28,10 +31,11 @@ export function CartLineItem({layout, line}) {
           height={100}
           loading="lazy"
           width={100}
+          className="w-24 h-24 object-cover rounded-md"
         />
       )}
 
-      <div>
+      <div className="flex-1">
         <Link
           prefetch="intent"
           to={lineItemUrl}
@@ -40,13 +44,15 @@ export function CartLineItem({layout, line}) {
               close();
             }
           }}
+          className="text-lg font-semibold text-blue-600 hover:underline"
         >
-          <p>
-            <strong>{product.title}</strong>
-          </p>
+          {product.title}
         </Link>
-        <ProductPrice price={line?.cost?.totalAmount} />
-        <ul>
+        <ProductPrice
+          price={line?.cost?.totalAmount}
+          className="text-sm text-gray-500 mt-1"
+        />
+        <ul className="text-sm text-gray-600 mt-2 space-y-1">
           {selectedOptions.map((option) => (
             <li key={option.name}>
               <small>
@@ -74,31 +80,41 @@ function CartLineQuantity({line}) {
   const nextQuantity = Number((quantity + 1).toFixed(0));
 
   return (
-    <div className="cart-line-quantity">
-      <small>Quantity: {quantity} &nbsp;&nbsp;</small>
+    <div className="cart-line-quantity flex items-center gap-2 mt-2 md:mt-0">
+      <small className="text-gray-600">Quantity: {quantity}</small>
       <CartLineUpdateButton lines={[{id: lineId, quantity: prevQuantity}]}>
         <button
           aria-label="Decrease quantity"
           disabled={quantity <= 1 || !!isOptimistic}
           name="decrease-quantity"
           value={prevQuantity}
+          className="px-2 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <span>&#8722; </span>
+          <span>&#8722;</span>
         </button>
       </CartLineUpdateButton>
-      &nbsp;
       <CartLineUpdateButton lines={[{id: lineId, quantity: nextQuantity}]}>
         <button
           aria-label="Increase quantity"
           name="increase-quantity"
           value={nextQuantity}
           disabled={!!isOptimistic}
+          className="px-2 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <span>&#43;</span>
         </button>
       </CartLineUpdateButton>
-      &nbsp;
-      <CartLineRemoveButton lineIds={[lineId]} disabled={!!isOptimistic} />
+      <CartLineRemoveButton
+        lineIds={[lineId]}
+        disabled={!!isOptimistic}
+      >
+        <button
+          aria-label="Remove item"
+          className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Remove
+        </button>
+      </CartLineRemoveButton>
     </div>
   );
 }

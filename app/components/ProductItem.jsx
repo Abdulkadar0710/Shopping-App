@@ -1,6 +1,7 @@
-import {Link} from 'react-router';
+import {Link, useLoaderData} from 'react-router';
 import {Image, Money} from '@shopify/hydrogen';
 import {useVariantUrl} from '~/lib/variants';
+import {useI18n} from '~/components/I18nContext';
 
 /**
  * @param {{
@@ -11,12 +12,22 @@ import {useVariantUrl} from '~/lib/variants';
  *   loading?: 'eager' | 'lazy';
  * }}
  */
+
+
 export function ProductItem({product, loading}) {
   const variantUrl = useVariantUrl(product.handle);
   const image = product.featuredImage;
+
+  const data = useLoaderData();
+  console.log('ProductItem data: ', data);
+
+  const i18n = useI18n();
+
+  console.log('i18n: ', i18n);
+
   return (
     <Link
-      className="product-item"
+      className="product-item block bg-white shadow-md rounded-lg overflow-hidden transform transition-transform hover:scale-105"
       key={product.id}
       prefetch="intent"
       to={variantUrl}
@@ -28,12 +39,17 @@ export function ProductItem({product, loading}) {
           data={image}
           loading={loading}
           sizes="(min-width: 45em) 400px, 100vw"
+          className="w-full h-64 object-cover"
         />
       )}
-      <h4>{product.title}</h4>
-      <small>
-        <Money data={product.priceRange.minVariantPrice} />
-      </small>
+      <div className="p-4">
+        <h4 className="text-lg font-semibold text-gray-800 truncate">
+          {/* {i18n.t(product.title)} */}
+        </h4>
+        <small className="text-gray-600">
+          <Money data={product.priceRange.minVariantPrice} />
+        </small>
+      </div>
     </Link>
   );
 }

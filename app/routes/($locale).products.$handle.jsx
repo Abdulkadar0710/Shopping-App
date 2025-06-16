@@ -1,4 +1,4 @@
-import {useLoaderData} from 'react-router';
+import {useLoaderData, useRouteLoaderData} from 'react-router';
 import {
   getSelectedProductOptions,
   Analytics,
@@ -11,6 +11,9 @@ import {ProductPrice} from '~/components/ProductPrice';
 import {ProductImage} from '~/components/ProductImage';
 import {ProductForm} from '~/components/ProductForm';
 import {redirectIfHandleIsLocalized} from '~/lib/redirect';
+import { CiHeart } from "react-icons/ci";
+import { FaHeart } from "react-icons/fa";
+import { useEffect, useState } from 'react';
 
 /**
  * @type {MetaFunction<typeof loader>}
@@ -35,7 +38,27 @@ export async function loader(args) {
   // Await the critical data required to render initial state of the page
   const criticalData = await loadCriticalData(args);
 
-  return {...deferredData, ...criticalData};
+
+  const customerAccessToken = args.context.session.get('customerAccessToken');
+  // console.log("customerAccessTokensss: ", customerAccessToken);
+
+
+  const query = `
+    query GetCustomerId($customerAccessToken: String!) {
+      customer(customerAccessToken: $customerAccessToken) {
+        id  
+      }
+    }
+  `;
+
+  const variables = {
+    customerAccessToken,
+  };
+ 
+  const response = await args.context.storefront.query(query, {variables});
+
+
+  return {...deferredData, ...criticalData, customerId: response?.customer?.id, customerAccessToken: customerAccessToken};
 }
 
 /**
@@ -68,7 +91,7 @@ async function loadCriticalData({context, params, request}) {
   return {
     product,
   };
-}
+} 
 
 /**
  * Load data for rendering content below the fold. This data is deferred and will be
@@ -86,6 +109,30 @@ function loadDeferredData({context, params}) {
 export default function Product() {
   /** @type {LoaderReturnData} */
   const {product} = useLoaderData();
+
+  const data = useLoaderData();
+  console.log("Product data: ", data);
+
+
+  const { customerId } = data;
+  const { customerAccessToken } = data;
+
+  const [flag, setFlag] = useState(true);
+
+
+  const [currentProduct, setCurrentProduct] = useState(product);
+
+  const productToSave = {
+    id: currentProduct.id,   
+    title: currentProduct.title,
+    vendor: currentProduct.vendor,  
+    description: currentProduct.description,
+    handle: currentProduct.handle,
+    image: currentProduct.selectedOrFirstAvailableVariant.image.url,
+    price: currentProduct.selectedOrFirstAvailableVariant.price.amount,
+  };
+
+
 
   // Optimistically selects a variant with given available variant information
   const selectedVariant = useOptimisticVariant(
@@ -105,28 +152,134 @@ export default function Product() {
 
   const {title, descriptionHtml} = product;
 
+
+
+
+
+  useEffect(() => {
+    const fetchWishList = async () => {
+      try {
+        console.log("Product to save: ", productToSave);
+        const response = await fetch('/fetchWishList', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ customerAccessToken })
+        });
+  
+        let data = await response.json();
+        // data =  data.customer?.metafield?.value ? JSON.parse(data.customer?.metafield?.value) : [];
+  
+        const foundItem = data.find((item) => item.id === product.id);
+        console.log("foundItem: ", foundItem);
+        setFlag(foundItem ? false : true);
+      } catch (error) {
+        console.error("Error fetching wishlist:", error);
+      }
+    };
+   
+    fetchWishList();
+
+  
+    // // If you had a cleanup, return it here:
+    // return () => {
+    //   // any necessary cleanup (nothing in your case)
+    // };
+  }, []);
+
+
+
+
+
+  const addToCart = async () => {
+
+
+    const response = await fetch('/fetchWishList', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'},
+        body: JSON.stringify({ customerAccessToken }),
+      },
+    );
+   
+    let data = await response.json();
+    console.log("data: ", data);
+    // data =  data ? JSON.parse(data) : [];
+
+    console.log("flag: ",flag);
+     if(flag){
+       data.push(productToSave);
+      //  console.log("Adding to wishlist", data);
+
+      const updatedResponse = await fetch('/addToWishList', {
+        method: 'POST', 
+        headers: {
+          'Content-Type': 'application/json', 
+        },
+        body: JSON.stringify({wishlist: data, customerId: customerId}),
+      });
+      const updatedData = await updatedResponse.json();
+      // console.log('updated Wishlist added one:', updatedData);
+    }
+      else{
+        // console.log('Before Updated Wishlist:', data);
+        // console.log("productToSave: ",productToSave);
+        data = data.filter((item) => item.id !== productToSave.id);
+        // console.log('Updated Wishlist:', data);
+        const updatedResponse = await fetch('/addToWishList', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json', 
+          },
+          body: JSON.stringify({wishlist: data, customerId: customerId}),
+        });
+        const updatedData = await updatedResponse.json();
+        // console.log('updated Wishlist cutdown:', updatedData);
+      }
+      setFlag(!flag);
+  };    
+
+
+  useEffect(() => { 
+    console.log("floag: ",flag);
+  }, [flag]);
+
+
+
   return (
-    <div className="product">
-      <ProductImage image={selectedVariant?.image} />
-      <div className="product-main">
-        <h1>{title}</h1>
-        <ProductPrice
-          price={selectedVariant?.price}
-          compareAtPrice={selectedVariant?.compareAtPrice}
-        />
-        <br />
-        <ProductForm
-          productOptions={productOptions}
-          selectedVariant={selectedVariant}
-        />
-        <br />
-        <br />
-        <p>
-          <strong>Description</strong>
-        </p>
-        <br />
-        <div dangerouslySetInnerHTML={{__html: descriptionHtml}} />
-        <br />
+    <div className="product container mx-auto p-4 md:p-8 bg-gray-50">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
+        <div className="product-image grid ">
+          <ProductImage
+            image={selectedVariant?.image}
+            className="rounded-lg shadow-lg"
+            // style={{ height: '90vh', objectFit: 'cover' }}
+          />   
+        </div>
+        <div className="product-main space-y-8">
+          <h1 className="text-4xl font-bold text-gray-800">{title}</h1>
+          <ProductPrice
+            price={selectedVariant?.price}
+            compareAtPrice={selectedVariant?.compareAtPrice}
+            className="text-2xl text-gray-600"
+          />
+          <ProductForm
+            productOptions={productOptions}
+            selectedVariant={selectedVariant}
+            className="space-y-6"
+          />
+          <div className="addToCart"
+           onClick={addToCart}
+        >{ flag==true ? <div className="flex justify-start items-center"><CiHeart className="text-2xl mr-2" /> add to WishList </div> : <div className="flex justify-start items-center"><FaHeart className="text-2xl mr-2" /> added to WishList</div>}</div>
+          <div>
+            <p className="text-lg font-semibold text-gray-700">Description</p>
+            <div
+              className="mt-4 text-gray-600 text-base leading-relaxed"
+              dangerouslySetInnerHTML={{ __html: descriptionHtml }}
+            />
+          </div>
+        </div>
       </div>
       <Analytics.ProductView
         data={{

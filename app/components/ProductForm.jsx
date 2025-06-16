@@ -112,7 +112,7 @@ export function ProductForm({productOptions, selectedVariant}) {
             : []
         }
       >
-        {selectedVariant?.availableForSale ? 'Add to cart' : 'Sold out'}
+        {selectedVariant?.availableForSale ? <button className=" border border-1 border-black px-5 py-2 hover:bg-black hover:text-white ">Add to cart</button> : <button className=" border border-1 border-black px-5 py-2 hover:bg-black hover:text-white ">Sold out</button>}
       </AddToCartButton>
     </div>
   );

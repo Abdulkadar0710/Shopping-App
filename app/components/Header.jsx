@@ -54,7 +54,7 @@ export function HeaderMenu({
           Home
         </NavLink>
       )}
-      {(menu || FALLBACK_HEADER_MENU).items.map((item) => {
+      {(FALLBACK_HEADER_MENU).items.map((item) => {
         if (!item.url) return null;
 
         // if the url is internal, we strip the domain
@@ -200,6 +200,24 @@ const FALLBACK_HEADER_MENU = {
   id: 'gid://shopify/Menu/199655587896',
   items: [
     {
+      id: 'gid://shopify/MenuItem/461609500726',
+      resourceId: null,
+      tags: [],
+      title: 'Home',
+      type: 'HTTP',
+      url: '/',
+      items: [],
+    },
+    {
+      id: 'gid://shopify/MenuItem/461609500727',
+      resourceId: null,
+      tags: [],
+      title: 'Cart',
+      type: 'HTTP',
+      url: '/cartPage',
+      items: [],
+    },
+    {
       id: 'gid://shopify/MenuItem/461609500728',
       resourceId: null,
       tags: [],
@@ -209,32 +227,15 @@ const FALLBACK_HEADER_MENU = {
       items: [],
     },
     {
-      id: 'gid://shopify/MenuItem/461609533496',
+      id: 'gid://shopify/MenuItem/461609500729',
       resourceId: null,
       tags: [],
-      title: 'Blog',
+      title: 'WishList',
       type: 'HTTP',
-      url: '/blogs/journal',
+      url: '/WishList',
       items: [],
     },
-    {
-      id: 'gid://shopify/MenuItem/461609566264',
-      resourceId: null,
-      tags: [],
-      title: 'Policies',
-      type: 'HTTP',
-      url: '/policies',
-      items: [],
-    },
-    {
-      id: 'gid://shopify/MenuItem/461609599032',
-      resourceId: 'gid://shopify/Page/92591030328',
-      tags: [],
-      title: 'About',
-      type: 'PAGE',
-      url: '/pages/about',
-      items: [],
-    },
+    
   ],
 };
 

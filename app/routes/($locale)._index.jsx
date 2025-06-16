@@ -28,7 +28,12 @@ export async function loader(args) {
 
   const dd = await args.context.customerAccount;
 
-  return {...deferredData, ...criticalData, context: dd};
+  const { i18n } = args.context.storefront;
+
+  return {...deferredData, ...criticalData, context: dd, 
+   RecommendedProductsTitle: i18n.t('Recommended Products'),
+   shoes: i18n.t('shoes'),
+  };
 }
 
 /**
@@ -117,10 +122,13 @@ export default function Homepage() {
  * }}
  */
 function RecommendedProducts({products}) {
+
+  const { RecommendedProductsTitle } = useLoaderData();
+
   return (
     <div className="recommended-products px-4 py-8 bg-gray-50">
       <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
-        Recommended Products
+        Recommended Products { RecommendedProductsTitle }
       </h2>
       <Suspense fallback={<div className="text-center text-gray-500">Loading...</div>}>
         <Await resolve={products}>

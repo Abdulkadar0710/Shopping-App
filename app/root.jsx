@@ -16,6 +16,8 @@ import appStyles from '~/styles/app.css?url';
 import tailwindCss from './styles/tailwind.css?url';
 import {PageLayout} from './components/PageLayout';
 import { getCustomerAccessToken } from './lib/auth';
+import { useLoaderData } from 'react-router';
+import { I18nProvider } from './components/I18nContext'; 
 
 /**
  * This is important to avoid re-fetching root queries on sub-navigations
@@ -80,7 +82,7 @@ export async function loader(args) {
 
   const token = await getCustomerAccessToken(args.context); 
 
-  console.log('Customer access token:', token); 
+  console.log('Customer access token:', token);
  
   // Start fetching non-critical data without blocking time to first byte
   const deferredData = loadDeferredData(args);
@@ -90,6 +92,8 @@ export async function loader(args) {
 
   const {storefront, env} = args.context;
 
+  const { i18n} = storefront; 
+
   return {
     ...deferredData,
     ...criticalData,
@@ -98,6 +102,7 @@ export async function loader(args) {
       storefront,
       publicStorefrontId: env.PUBLIC_STOREFRONT_ID,
     }),
+    i18n,
     // setLoggedIn,
     consent: {
       checkoutDomain: env.PUBLIC_CHECKOUT_DOMAIN,
@@ -170,6 +175,10 @@ export function Layout({children}) {
 
   // console.log('Root loader data:', data);
 
+  const {i18n} = useLoaderData(); // Comes from your root loader or layout route
+
+  
+
   return (
     <html lang="en">
       <head>
@@ -188,7 +197,11 @@ export function Layout({children}) {
             shop={data.shop}
             consent={data.consent}
           >
-            <PageLayout {...data}>{children}</PageLayout> 
+            <PageLayout {...data}>
+            <I18nProvider i18n={i18n}>
+              {children}
+            </I18nProvider>
+              </PageLayout> 
           </Analytics.Provider>
         ) : (
           children

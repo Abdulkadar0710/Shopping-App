@@ -1185,6 +1185,46 @@ export type StoreRobotsQueryVariables = StorefrontAPI.Exact<{
 
 export type StoreRobotsQuery = {shop: Pick<StorefrontAPI.Shop, 'id'>};
 
+export type GetCustomerWishlistQueryVariables = StorefrontAPI.Exact<{
+  customerAccessToken: StorefrontAPI.Scalars['String']['input'];
+}>;
+
+export type GetCustomerWishlistQuery = {
+  customer?: StorefrontAPI.Maybe<{
+    metafield?: StorefrontAPI.Maybe<Pick<StorefrontAPI.Metafield, 'value'>>;
+  }>;
+};
+
+export type GetProductsQueryVariables = StorefrontAPI.Exact<{
+  ids:
+    | Array<StorefrontAPI.Scalars['ID']['input']>
+    | StorefrontAPI.Scalars['ID']['input'];
+  language?: StorefrontAPI.InputMaybe<StorefrontAPI.LanguageCode>;
+  country?: StorefrontAPI.InputMaybe<StorefrontAPI.CountryCode>;
+}>;
+
+export type GetProductsQuery = {
+  nodes: Array<
+    StorefrontAPI.Maybe<
+      Pick<
+        StorefrontAPI.Product,
+        'id' | 'title' | 'description' | 'handle' | 'vendor'
+      > & {
+        images: {
+          edges: Array<{node: Pick<StorefrontAPI.Image, 'url' | 'altText'>}>;
+        };
+        variants: {
+          edges: Array<{
+            node: {
+              price: Pick<StorefrontAPI.MoneyV2, 'amount' | 'currencyCode'>;
+            };
+          }>;
+        };
+      }
+    >
+  >;
+};
+
 export type CustomerAccessTokenCreateMutationVariables = StorefrontAPI.Exact<{
   input: StorefrontAPI.CustomerAccessTokenCreateInput;
 }>;
@@ -1283,6 +1323,14 @@ interface GeneratedQueryTypes {
   '#graphql\n  query StoreRobots($country: CountryCode, $language: LanguageCode)\n   @inContext(country: $country, language: $language) {\n    shop {\n      id\n    }\n  }\n': {
     return: StoreRobotsQuery;
     variables: StoreRobotsQueryVariables;
+  };
+  '#graphql\n    query GetCustomerWishlist($customerAccessToken: String!) {\n      customer(customerAccessToken: $customerAccessToken) {\n        metafield(namespace: "custom", key: "wishl") {\n          value \n        }\n      }\n    }\n  ': {
+    return: GetCustomerWishlistQuery;
+    variables: GetCustomerWishlistQueryVariables;
+  };
+  '#graphql\n  query GetProducts($ids: [ID!]!, $language: LanguageCode, $country: CountryCode) \n  @inContext(language: $language, country: $country) { \n    nodes(ids: $ids) { \n      ... on Product { \n        id\n        title\n        description\n        handle\n        vendor\n        images(first: 1) {\n          edges {\n            node {\n              url\n              altText\n            } \n          }\n        }\n        variants(first: 1) {\n          edges {\n            node {\n              price {\n                amount\n                currencyCode\n              }\n            }\n          }\n        }\n      }\n    }\n  }\n': {
+    return: GetProductsQuery;
+    variables: GetProductsQueryVariables;
   };
 }
 
